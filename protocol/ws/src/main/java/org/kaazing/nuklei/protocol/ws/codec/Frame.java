@@ -32,7 +32,7 @@ public abstract class Frame extends FlyweightBE
     private static final byte MASKED_MASK = (byte) 0b10000000;
     private static final byte LENGTH_BYTE_1_MASK = 0b01111111;
     private static final int LENGTH_OFFSET = 1;
-    private static final int MASK_OFFSET = 1;
+    protected static final int MASK_BIT_OFFSET = 1;
 
     private MutableDirectBuffer unmaskedPayload;
     private final Payload payload = new Payload();
@@ -74,7 +74,7 @@ public abstract class Frame extends FlyweightBE
 
     public boolean isMasked()
     {
-        return (uint8Get(buffer(), offset() + MASK_OFFSET) & MASKED_MASK) != 0;
+        return (uint8Get(buffer(), offset() + MASK_BIT_OFFSET) & MASKED_MASK) != 0;
     }
 
     public int limit()
@@ -121,6 +121,31 @@ public abstract class Frame extends FlyweightBE
         validateLength(); // this must be done before unmasking payload, doing here for consistent behavior
         payload.wrap(null, offset, 0, mutable);
         return this;
+    }
+
+    protected void setLengthAndMaskBit(int length, boolean masked)
+    {
+        int lengthOffset = offset() + LENGTH_OFFSET;
+        byte maskBit = (byte) (masked ? 0x80: 0);
+        if (length <= 125)
+        {
+            mutableBuffer().setMemory(lengthOffset, 1, (byte) (length | maskBit));
+        }
+        else if (length <= 0xFFFF)
+        {
+            mutableBuffer().setMemory(lengthOffset, 1, (byte) (126 | maskBit));
+            uint16Put(mutableBuffer(), lengthOffset + 1, (int) length);
+        }
+        else
+        {
+            mutableBuffer().setMemory(lengthOffset, 1, (byte) (127 | maskBit));
+            int64Put(mutableBuffer(), lengthOffset + 1, length);
+        }
+    }
+
+    public void setMask()
+    {
+
     }
 
     int getDataOffset()

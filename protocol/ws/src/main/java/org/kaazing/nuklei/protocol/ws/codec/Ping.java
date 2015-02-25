@@ -19,7 +19,7 @@ import java.net.ProtocolException;
 
 import uk.co.real_logic.agrona.DirectBuffer;
 
-public final class Ping extends ControlFrame
+public class Ping extends ControlFrame
 {
 
     Ping()
