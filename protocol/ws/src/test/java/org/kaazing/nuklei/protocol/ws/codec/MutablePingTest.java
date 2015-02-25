@@ -18,6 +18,7 @@ package org.kaazing.nuklei.protocol.ws.codec;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.experimental.theories.Theory;
@@ -116,5 +117,25 @@ public class MutablePingTest extends FrameTest
 
     // TODO:
     // setPayloadWithOverlongLengthShouldFail, etc
+
+
+    @Theory
+    public void setPayloadWithOverlongLengthShouldFail(int offset, boolean masked) throws Exception
+    {
+        ping.wrap(masked, buffer, offset);
+        int length = 126;
+        byte[] payloadInputBytes = new byte[length + offset];
+        DirectBuffer payloadInput = new UnsafeBuffer(payloadInputBytes);
+        try
+        {
+            ping.setPayload(payloadInput, 0, length);
+        }
+        catch (IllegalArgumentException expected)
+        {
+            assertTrue(expected.getMessage().contains("length" ));
+            return;
+        }
+        fail("Expected exception not thrown");
+    }
 
 }
